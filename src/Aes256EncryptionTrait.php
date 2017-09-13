@@ -80,7 +80,7 @@ trait Aes256EncryptionTrait
         $keyFile = $encryptedPath . DIRECTORY_SEPARATOR . 'key.txt';
         $ivFile = $encryptedPath . DIRECTORY_SEPARATOR . 'iv.txt';
         $metaFile = $encryptedPath . DIRECTORY_SEPARATOR . 'meta.json';
-        $zipFile = $this->getFullPathAttribute() . DIRECTORY_SEPARATOR . $this->file_name . '.zip';
+        $zipFile = $this->path . DIRECTORY_SEPARATOR . $this->file_name . '.zip';
 
         /*
          * Save encrypted file
