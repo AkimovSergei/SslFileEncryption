@@ -139,19 +139,4 @@ trait EncryptionTrait
         return $this->iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->getCipher()));
     }
 
-    /**
-     * Get the instance as an array.
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        return [
-            'key' => $this->getKey(),
-            'iv' => $this->getIV(),
-            'options' => $this->getOptions(),
-        ];
-    }
-
-
 }
