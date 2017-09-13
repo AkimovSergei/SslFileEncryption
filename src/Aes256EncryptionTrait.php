@@ -8,7 +8,6 @@
 
 namespace Sa\SslFileEncryption;
 
-
 use Sa\SslFileEncryption\Exceptions\FileNotFoundException;
 use Sa\SslFileEncryption\Exceptions\FileNotWritableException;
 
@@ -71,16 +70,25 @@ trait Aes256EncryptionTrait
          */
         $encrypted = openssl_encrypt($this->fileGetContents(), $this->getCipher(), $this->getKey(), $this->getOptions(), $this->getIV());
 
+        $basePath = public_path($this->path);
+
         /*
          * Encrypted file path
          */
-        $encryptedPath = $this->path . DIRECTORY_SEPARATOR . md5(str_random());
+        $encryptedPath = $basePath . DIRECTORY_SEPARATOR . md5(str_random());
 
         $encryptedFile = $encryptedPath . DIRECTORY_SEPARATOR . $this->name;
         $keyFile = $encryptedPath . DIRECTORY_SEPARATOR . 'key.txt';
         $ivFile = $encryptedPath . DIRECTORY_SEPARATOR . 'iv.txt';
         $metaFile = $encryptedPath . DIRECTORY_SEPARATOR . 'meta.json';
-        $zipFile = $this->path . DIRECTORY_SEPARATOR . $this->file_name . '.zip';
+        $zipFile = $basePath . DIRECTORY_SEPARATOR . $this->name . '.zip';
+
+        /*
+         * Create Directory
+         */
+        if (!file_exists($encryptedPath)) {
+            mkdir($encryptedPath);
+        }
 
         /*
          * Save encrypted file
@@ -99,7 +107,7 @@ trait Aes256EncryptionTrait
         try {
             \File::put($keyFile, $this->getKey());
             \File::put($ivFile, $this->getIV());
-            \File::put($metaFile, "");
+            \File::put($metaFile, json_encode(""));
         } catch (\Exception $ex) {
 
         }
