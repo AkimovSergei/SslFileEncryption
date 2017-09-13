@@ -74,7 +74,7 @@ trait Aes256EncryptionTrait
         /*
          * Encrypted file path
          */
-        $encryptedPath = $this->getFullPathAttribute() . DIRECTORY_SEPARATOR . time();
+        $encryptedPath = $this->path . DIRECTORY_SEPARATOR . md5(str_random());
 
         $encryptedFile = $encryptedPath . DIRECTORY_SEPARATOR . $this->name;
         $keyFile = $encryptedPath . DIRECTORY_SEPARATOR . 'key.txt';
