@@ -1,0 +1,20 @@
+{
+  "name": "ssl-file-encryption",
+  "version": "0.0.1",
+  "description": "SSL file encryption",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Sergii Akimov",
+      "email": "akimov.sergii@gmail.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "Sa\\SslFileEncryption\\": "src"
+    }
+  }
+}
