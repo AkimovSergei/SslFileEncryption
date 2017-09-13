@@ -1,5 +1,5 @@
 {
-  "name": "ssl-file-encryption",
+  "name": "sa/ssl-file-encryption",
   "version": "0.0.1",
   "description": "SSL file encryption",
   "type": "library",
