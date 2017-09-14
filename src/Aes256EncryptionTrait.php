@@ -18,6 +18,7 @@ use Sa\SslFileEncryption\Exceptions\FileNotWritableException;
  */
 trait Aes256EncryptionTrait
 {
+
     use EncryptionTrait;
 
     /**
@@ -59,11 +60,12 @@ trait Aes256EncryptionTrait
     /**
      * Encrypt
      *
+     * @param $userId
+     * @param int $expiryDuration
      * @return string
-     * @throws FileNotFoundException
      * @throws FileNotWritableException
      */
-    public function encrypt($userId)
+    public function encrypt($userId, $expiryDuration = 1)
     {
         /*
          * Encrypted content
@@ -107,7 +109,7 @@ trait Aes256EncryptionTrait
         try {
             \File::put($keyFile, $this->getKey());
             \File::put($ivFile, $this->getIV());
-            \File::put($metaFile, json_encode(""));
+            \File::put($metaFile, json_encode($this->generateMeta($expiryDuration)));
         } catch (\Exception $ex) {
 
         }
@@ -156,6 +158,23 @@ trait Aes256EncryptionTrait
     protected function getEncryptionPassword($userId)
     {
         return sha1($userId . $this->id);
+    }
+
+    /**
+     * Generate meta array
+     *
+     * @param $expiryDuration
+     * @return string
+     */
+    public function generateMeta($expiryDuration)
+    {
+        return [
+            'expiry' => [
+                'generated_at' => \Carbon\Carbon::now()->toDateTimeString(),
+                'expires_at' => \Carbon\Carbon::now()->addDays($expiryDuration)->toDateTimeString(),
+                'expiry_days_count' => $expiryDuration,
+            ],
+        ];
     }
 
 }
