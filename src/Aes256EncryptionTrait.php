@@ -54,14 +54,13 @@ trait Aes256EncryptionTrait
     /**
      * Encrypt
      *
-     * @param $userId
+     * @param $user
      * @param int $expiryDuration
      * @return string
      * @throws \Exception
      */
-    public function encrypt($userId, $expiryDuration = 1)
+    public function encrypt($user, $expiryDuration = 1)
     {
-
 
         $basePath = public_path($this->path);
 
@@ -149,7 +148,7 @@ trait Aes256EncryptionTrait
 
         }
 
-        $pwd = $this->getEncryptionPassword($userId);
+        $pwd = $this->getEncryptionPassword($user);
 
         /*
          * Create zip with password
@@ -264,6 +263,7 @@ trait Aes256EncryptionTrait
      * @param string $str
      *
      * @return int
+     * @throws \Exception
      */
     public static function ourStrlen($str)
     {
@@ -289,8 +289,8 @@ trait Aes256EncryptionTrait
      * @param int $start
      * @param int $length
      *
-     *
      * @return string|bool
+     * @throws \Exception
      */
     public static function ourSubstr($str, $start, $length = null)
     {
