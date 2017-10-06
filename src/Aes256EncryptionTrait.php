@@ -360,12 +360,12 @@ trait Aes256EncryptionTrait
     /**
      * Get encrypted password
      *
-     * @param $userId
+     * @param $user
      * @return string
      */
-    protected function getEncryptionPassword($userId)
+    protected function getEncryptionPassword($user)
     {
-        return sha1($userId . $this->id);
+        return sha1($user->id . $this->id);
     }
 
     /**
