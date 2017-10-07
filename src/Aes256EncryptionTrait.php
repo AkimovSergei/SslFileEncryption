@@ -179,7 +179,7 @@ trait Aes256EncryptionTrait
      */
     public static function writeBytes($stream, $buf, $num_bytes = null)
     {
-        $bufSize = mb_strlen($buf);
+        $bufSize = static::ourStrlen($buf);
         if ($num_bytes === null) {
             $num_bytes = $bufSize;
         }
