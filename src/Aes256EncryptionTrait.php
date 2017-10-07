@@ -54,16 +54,23 @@ trait Aes256EncryptionTrait
     /**
      * Encrypt
      *
-     * @param $user
+     * @param $userId
      * @param int $expiryDuration
      * @return string
-     * @throws \Exception
+     * @throws FileNotWritableException
      */
-    public function encrypt($user, $expiryDuration = 1)
+    public function encrypt($userId, $expiryDuration = 1)
     {
+        /*
+         * Encrypted content
+         */
+        $encrypted = openssl_encrypt($this->fileGetContents(), $this->getCipher(), $this->getKey(), $this->getOptions(), $this->getIV());
 
         $basePath = public_path($this->path);
 
+        /*
+         * Encrypted file path
+         */
         $encryptedPath = $basePath . DIRECTORY_SEPARATOR . md5(str_random());
 
         $encryptedFile = $encryptedPath . DIRECTORY_SEPARATOR . $this->name;
@@ -79,63 +86,16 @@ trait Aes256EncryptionTrait
             mkdir($encryptedPath);
         }
 
-        $inputHandle = @\fopen($this->getFullPathAttribute(), 'rb');
-        $outputHandle = @\fopen($encryptedFile, 'wb');
+        /*
+         * Save encrypted file
+         */
+        $fp = fopen($encryptedPath . DIRECTORY_SEPARATOR . $this->name, 'wb');
 
-        $inputStat = \fstat($inputHandle);
-        $inputSize = $inputStat['size'];
-
-        /* Loop until we reach the end of the input file. */
-        $atFileEnd = false;
-        while (!(\feof($inputHandle) || $atFileEnd)) {
-
-            /* Find out if we can read a full buffer, or only a partial one. */
-            /** @var int */
-            $pos = \ftell($inputHandle);
-
-            if (!\is_int($pos)) {
-                throw new \Exception(
-                    'Could not get current position in input file during encryption'
-                );
-            }
-
-            if ($pos + 1048576 >= $inputSize) {
-                /* We're at the end of the file, so we need to break out of the loop. */
-                $atFileEnd = true;
-                $read = self::readBytes(
-                    $inputHandle,
-                    $inputSize - $pos
-                );
-            } else {
-                $read = self::readBytes(
-                    $inputHandle,
-                    1048576
-                );
-            }
-
-            /* Encrypt this buffer. */
-            /** @var string */
-            $encrypted = \openssl_encrypt(
-                $read,
-                $this->getCipher(),
-                $this->getKey(),
-                $this->getOptions(), // OPENSSL_RAW_DATA
-                $this->getIV()
-            );
-
-            if (!\is_string($encrypted)) {
-                throw new \Exception(
-                    'OpenSSL encryption error'
-                );
-            }
-
-            /* Write this buffer's ciphertext. */
-            self::writeBytes($outputHandle, $encrypted, mb_strlen($encrypted));
-
+        if (!fwrite($fp, $encrypted)) {
+            throw new FileNotWritableException("Could not write file " . $this->getFilePath());
         }
 
-        \fclose($inputHandle);
-        \fclose($outputHandle);
+        fclose($fp);
 
         /*
          * Keep key and meta
@@ -148,7 +108,7 @@ trait Aes256EncryptionTrait
 
         }
 
-        $pwd = $this->getEncryptionPassword($user);
+        $pwd = $this->getEncryptionPassword($userId);
 
         /*
          * Create zip with password
@@ -166,180 +126,6 @@ trait Aes256EncryptionTrait
 
         return $zipFile;
     }
-
-    /**
-     * Write to a stream; prevents partial writes.
-     *
-     * @param resource $stream
-     * @param string $buf
-     * @param int $num_bytes
-     * @return int
-     *
-     * @throws \Exception
-     */
-    public static function writeBytes($stream, $buf, $num_bytes = null)
-    {
-        $bufSize = static::ourStrlen($buf);
-        if ($num_bytes === null) {
-            $num_bytes = $bufSize;
-        }
-        if ($num_bytes > $bufSize) {
-            throw new \Exception(
-                'Trying to write more bytes than the buffer contains.'
-            );
-        }
-        if ($num_bytes < 0) {
-            throw new \Exception(
-                'Tried to write less than 0 bytes'
-            );
-        }
-        $remaining = $num_bytes;
-        while ($remaining > 0) {
-            /** @var int $written */
-            $written = \fwrite($stream, $buf, $remaining);
-            if (!\is_int($written)) {
-                throw new \Exception(
-                    'Could not write to the file'
-                );
-            }
-            $buf = (string)static::ourSubstr($buf, $written, null);
-            $remaining -= $written;
-        }
-        return $num_bytes;
-    }
-
-
-    /**
-     * Read from a stream; prevent partial reads.
-     *
-     * @param resource $stream
-     * @param int $num_bytes
-     * @return string
-     *
-     * @throws \Exception
-     */
-    public static function readBytes($stream, $num_bytes)
-    {
-        if ($num_bytes < 0) {
-            throw new \Exception(
-                'Tried to read less than 0 bytes'
-            );
-        } elseif ($num_bytes === 0) {
-            return '';
-        }
-
-        $buf = '';
-        $remaining = $num_bytes;
-
-        while ($remaining > 0 && !\feof($stream)) {
-
-            /** @var string $read */
-            $read = \fread($stream, $remaining);
-
-            if (!\is_string($read)) {
-                throw new \Exception(
-                    'Could not read from the file'
-                );
-            }
-
-            $buf .= $read;
-            $remaining -= static::ourStrlen($read);
-
-        }
-
-        if (static::ourStrlen($buf) !== $num_bytes) {
-            throw new \Exception(
-                'Tried to read past the end of the file '
-            );
-        }
-
-        return $buf;
-    }
-
-
-    /**
-     * Computes the length of a string in bytes.
-     *
-     * @param string $str
-     *
-     * @return int
-     * @throws \Exception
-     */
-    public static function ourStrlen($str)
-    {
-        static $exists = null;
-        if ($exists === null) {
-            $exists = \function_exists('mb_strlen');
-        }
-        if ($exists) {
-            $length = \mb_strlen($str, '8bit');
-            if ($length === false) {
-                throw new \Exception();
-            }
-            return $length;
-        } else {
-            return \strlen($str);
-        }
-    }
-
-    /**
-     * Behaves roughly like the function substr() in PHP 7 does.
-     *
-     * @param string $str
-     * @param int $start
-     * @param int $length
-     *
-     * @return string|bool
-     * @throws \Exception
-     */
-    public static function ourSubstr($str, $start, $length = null)
-    {
-        static $exists = null;
-        if ($exists === null) {
-            $exists = \function_exists('mb_substr');
-        }
-
-        if ($exists) {
-            // mb_substr($str, 0, NULL, '8bit') returns an empty string on PHP
-            // 5.3, so we have to find the length ourselves.
-            if (!isset($length)) {
-                if ($start >= 0) {
-                    $length = static::ourStrlen($str) - $start;
-                } else {
-                    $length = -$start;
-                }
-            }
-
-            // This is required to make mb_substr behavior identical to substr.
-            // Without this, mb_substr() would return false, contra to what the
-            // PHP documentation says (it doesn't say it can return false.)
-            if ($start === static::ourStrlen($str) && $length === 0) {
-                return '';
-            }
-
-            if ($start > static::ourStrlen($str)) {
-                return false;
-            }
-
-            $substr = \mb_substr($str, $start, $length, '8bit');
-            if (static::ourStrlen($substr) !== $length) {
-                throw new \Exception(
-                    'Your version of PHP has bug #66797. Its implementation of
-                    mb_substr() is incorrect. See the details here:
-                    https://bugs.php.net/bug.php?id=66797'
-                );
-            }
-            return $substr;
-        }
-
-        // Unlike mb_substr(), substr() doesn't accept NULL for length
-        if (isset($length)) {
-            return \substr($str, $start, $length);
-        } else {
-            return \substr($str, $start);
-        }
-    }
-
 
     /**
      *
