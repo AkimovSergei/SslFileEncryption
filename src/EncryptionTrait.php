@@ -29,7 +29,7 @@ trait EncryptionTrait
      *
      * @var
      */
-    protected $options;
+    protected $options = OPENSSL_RAW_DATA;
 
     /**
      * Key size

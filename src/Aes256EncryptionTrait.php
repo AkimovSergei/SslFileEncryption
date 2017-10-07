@@ -61,6 +61,7 @@ trait Aes256EncryptionTrait
      */
     public function encrypt($userId, $expiryDuration = 1)
     {
+
         /*
          * Encrypted content
          */
@@ -89,10 +90,10 @@ trait Aes256EncryptionTrait
         /*
          * Save encrypted file
          */
-        $fp = fopen($encryptedPath . DIRECTORY_SEPARATOR . $this->name, 'wb');
+        $fp = fopen($encryptedFile, 'wb');
 
         if (!fwrite($fp, $encrypted)) {
-            throw new FileNotWritableException("Could not write file " . $this->getFilePath());
+            throw new FileNotWritableException("Could not write file " . $encryptedFile);
         }
 
         fclose($fp);
